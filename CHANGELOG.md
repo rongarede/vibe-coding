@@ -46,6 +46,35 @@
 - **涉及文件:** `prompts/system_prompt/full_prompt_v4.md`
 - **验证方式:** 人工检查 `工具使用规则` 段落编号与顺序
 
+## [2025-12-31T11:45:00+08:00] - 强化系统提示词的 DoD 约束
+- **任务名称:** 系统提示词自审计增强
+- **关键改动点:**
+    - 在 `full_prompt_v4.md` 中新增 `<definition_of_done>` 模块。
+    - 明确「规约自检」为任务完成的阻塞级条件。
+    - 引入「自我审计流程」，强制 AI 在输出结论前检查日志追加状态。
+- **涉及文件:** `prompts/system_prompt/full_prompt_v4.md`, `CHANGELOG.md`
+- **验证方式:** 检查文件确认 DoD 模块已正确插入。
+
+## [2025-12-31T11:20:00+08:00] - 重构提示词体系并同步远程
+- **任务名称:** 提示词库重构与同步
+- **关键改动点:**
+    - 移除 `prompts/collected/` 下的大量旧提示词文件。
+    - 新增核心技能文件：`prompts/skills/Canvas.md`, `prompts/skills/ReadProgram.txt` 等。
+    - 升级系统提示词：新增 `full_prompt_v3.md` 和 `full_prompt_v4.md`。
+    - 提交所有更改并推送到 GitHub。
+- **涉及文件:** `prompts/`, `CHANGELOG.md`
+- **验证方式:** `git status` 确认无遗留更改，`git push` 成功。
+
+## [2025-12-31T11:28:00+08:00] - 配置 .gitignore 忽略 vibe-coding-cn
+- **任务名称:** 库忽略配置
+- **关键改动点:**
+    - 创建根目录 `.gitignore` 文件。
+    - 添加 `vibe-coding-cn/` 到忽略列表。
+    - 添加通用忽略项（.DS_Store, 编辑器配置, 临时日志等）。
+    - 提交并推送到 GitHub。
+- **涉及文件:** `.gitignore`
+- **验证方式:** `git status` 确认 `vibe-coding-cn/` 已被忽略。
+
 ## [2025-12-31T14:33:21+08:00] - 工具使用规则编号从 1 开始
 - **任务名称:** 工具规则编号修正
 - **关键改动点:** 将「工具使用规则」编号由 `6-14` 改为 `1-9`
