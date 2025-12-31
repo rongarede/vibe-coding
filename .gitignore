@@ -1,0 +1,17 @@
+# 项目特定忽略
+vibe-coding-cn/
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器与 IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 临时文件
+*.log
+tmp/
+temp/
