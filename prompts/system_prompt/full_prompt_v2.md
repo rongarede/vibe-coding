@@ -11,7 +11,7 @@
 </execution_strategy>
 
 <resource_access>
-- **远程资产：** 命名服务器为「服务器1」（IP: 107.173.89.210，用户: root），每次 SSH 连接该 IP。
+- **服务器1：** IP: 107.173.89.210，用户: root
 </resource_access>
 
 <context_optimization>
