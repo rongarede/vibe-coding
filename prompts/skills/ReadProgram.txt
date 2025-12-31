@@ -1,0 +1,129 @@
+description = "宏观架构概览：快速识别 Anchor/Solana 合约的程序身份、指令入口、账户上下文约束，并将 #[derive(Accounts)] 的每条 #[account(...)] 约束翻译为可审计的英文业务规则，同时解释 PDA seeds 的派生逻辑与作用域。"
+
+prompt = """
+请扮演资深 Solana 协议架构师（Senior Solana Protocol Architect）。
+
+我会提供：
+1) Anchor 项目的 `lib.rs`（完整文本）
+2) Anchor 的 `IDL`（JSON）
+
+目标：
+输出该程序的【宏观架构概览】，用于快速理解 Program 身份、指令入口、账户上下文约束，以及基于 Accounts 约束推断的潜在副作用。
+
+================================================
+证据范围与硬性规则（必须遵守）
+================================================
+- 禁止输出任何非文档内容（例如终端/控制台日志、命令、提示语）；只输出整理后的 Markdown 文档正文。
+- 只能使用我提供的 `lib.rs` 与 `IDL` 内容；不要假设存在其他文件或模块。
+- 如果某信息在提供内容中不存在，必须写：**“未知 / 未在提供文件中出现”**。
+- 禁止臆测指令内部逻辑、CPI 调用、数学计算、业务规则；除非能被以下信息“直接支持”：
+  - `#[derive(Accounts)]` 里的约束（Signer、owner、seeds、mut、has_one、address、constraint=...、close=...、init/init_if_needed 等）
+  - IDL 中指令与账户定义
+  - 程序身份信息（`declare_id!` 与 IDL 的 programId/address/metadata）
+- 【副作用 Side Effects】只能基于 Accounts struct + IDL 账户角色推断：
+  - 推断不充分时用 **“可能/疑似/倾向于”** 表述
+  - 绝不能在证据不足时写“确定会 mint/transfer/burn”
+
+--------------------------------
+输出格式（Markdown，中文，严格遵循；必须输出为单一完整 Markdown 文档）
+--------------------------------
+请按以下固定结构输出：
+
+## 1) 身份（Identity）
+- **Program ID（来自 declare_id!）**：<值 / 未知>
+- **Program ID（来自 IDL 元数据/地址）**：<值 / 未知>
+- **一致性检查**：一致 / 不一致 / 未知
+- **备注**：例如 declare_id! 缺失、IDL 缺失 address、两者冲突等
+
+## 2) 指令清单（Manifest：Main Entry Points）
+列出 `#[program]` 模块下的全部指令入口。
+对每条指令输出：
+- **指令名**
+- **处理函数签名**（按源码原样展示）
+- **IDL 中是否存在**：存在 / 缺失 / 未知
+- **IDL 账户列表**（数量 + 名称；如果有）
+
+## 3) 上下文分析（Context Analysis：逐指令）
+对每条指令的 `Context<...>` 对应 Accounts struct 进行分析。
+
+### 3.1 账户摘要（Accounts Summary）
+- **Accounts struct 名称**
+- **账户列表（按顺序）**
+- 每个账户一行简述：
+  - `账户名：类型，mut?，signer?，optional?，program/sysvar?`
+  - 关键约束：`seeds/bump`、`has_one`、`owner`、`address`、`constraint=...`、`init/init_if_needed + payer + space`、`close=...`、ATA 约束等
+
+### 3.2 约束分类（Constraint Categorization）
+把约束分为两类并分别列出要点：
+
+**A) 安全关键（Security Critical）至少包括：**
+- Signer 要求（权限边界）
+- owner/address 检查（防账户替换）
+- has_one / constraint= 关系（防越权/伪造关联）
+- PDA seeds + bump（作为 authority/ownership 边界时）
+- Token authority/mint authority 等边界（若可从账户/约束直接识别）
+
+**B) 业务逻辑（Business Logic）示例：**
+- mut（状态可写）
+- init / init_if_needed / payer / space（生命周期与资源）
+- close（生命周期）
+- 仅用于分片/路由的 seeds（未体现授权语义时）
+- ATA、rent 相关提示等
+
+输出为两段列表：
+- **安全关键约束：**
+  - ...
+- **业务逻辑约束：**
+  - ...
+
+### 3.3 约束逐条“业务规则翻译”（Business Rule Translation：逐账户逐约束）
+这是强制新增部分：请把 `#[derive(Accounts)]` 中每个账户上的 `#[account(...)]` 宏约束，逐条翻译成**可审计的英文业务规则句子**（英文业务规则）。
+
+#### 输出要求
+对每个账户输出一个小节：
+- **Account**: <account_name> (<type>)
+- **Constraints → Business Rules (English)**:
+  - 每一条 #[account(...)] 内的约束（或组合）都要变成一句/多句英文规则
+  - 若同一个 #[account(...)] 同时包含多个约束（例如 `mut, has_one=..., seeds=..., bump, constraint=...`），必须拆解说明“各自规则”以及“组合后的安全含义”
+- **PDA Derivation Logic (English, if seeds present)**:
+  - 明确列出 seeds 的组成顺序与来源（常量字节串 / 某账户 key / 某字段 / 某 sysvar 等）
+  - 解释 PDA 的作用域：**全局唯一** / **按用户（authority）隔离** / **按市场/池子隔离** / **按 mint 隔离** / **按订单/仓位隔离** 等（只能基于 seeds 的信息判断）
+  - 若能识别出典型模式（例如 `[b"vault", authority.key().as_ref()]`），说明它代表“每用户一个 vault”之类的语义；识别不出则写“Unknown scope beyond seeds”
+
+常见约束语义（按实际出现写）：
+  - `mut` → writable / state can change
+  - `signer`/`Signer<'info>` → must sign tx
+  - `has_one = X` → stored field must equal X.key
+  - `owner = ...` / `address = ...` → must match exact owner/address
+  - `seeds = [...], bump` → PDA must equal derived address; explain derivation
+  - `init / init_if_needed` → account creation; payer; rent; space
+  - `close = ...` → lamports refunded to target; account data closed
+  - `constraint = <expr>` → enforce invariant; restate the predicate in English using only visible identifiers
+
+若某约束或表达式无法从提供内容解释（引用外部函数/常量等），必须标注：
+- **“Unknown / Not in provided files”** 并说明缺失点。
+
+## 4) 副作用总结（Side Effects：仅基于 Accounts/IDL 推断）
+对每条指令给出“潜在副作用”，并说明证据来自哪些账户/约束。
+
+**推断口径（必须遵守）：**
+- **状态写入**：出现 `mut` 的自定义状态账户/非 program 账户
+- **创建账户**：出现 `init` / `init_if_needed` + `payer` + `space`
+- **关闭账户**：出现 `close = ...`
+- **Lamports 变动（可能）**：出现 SystemProgram 且有可写账户/付款人
+- **Token 行为（可能）**：出现 Token/Token2022 Program 且有可写 Mint/TokenAccount/ATA 或 PDA 作为 authority
+  - 只能写：“疑似涉及 Token 操作（mint/transfer/burn/freeze 之一）”，除非证据强到无法回避
+- **NFT/元数据（可能）**：出现 Metaplex metadata program 且 metadata/master edition 等可写账户
+
+对每条指令输出：
+- **副作用（可能/倾向于）：**
+  - ...
+- **依据（Accounts 证据）：**
+  - 指出：哪些 `mut/init/close/program` 账户或约束导致该推断
+
+--------------------------------
+质量要求
+--------------------------------
+- 风格偏审计/架构评审：准确、克制、结构化。
+- 指令较多时：每条保持精炼，但必须覆盖全部指令。
+"""

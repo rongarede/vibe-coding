@@ -25,3 +25,29 @@
 - **关键改动点:** 将罗马数字列表转换规则限定为仅在处理 LaTeX 论文文本时生效。
 - **涉及文件:** prompts/system_prompt/full_prompt_v2.md
 - **验证方式:** 检查文件确认已添加场景限定。
+
+## [2025-12-31T14:15:39+08:00] - 生成 full_prompt_v4.md（模块合并）
+- **任务名称:** 系统提示词模块合并输出
+- **关键改动点:**
+    - 新增 `prompts/system_prompt/full_prompt_v4.md`，将 v2 的模块合并为 5 个顶层模块（core/tooling/workflow/principles/hooks）。
+    - 新增 `prompts/system_prompt/CLAUDE.md`，补齐目录级架构说明与变更记录。
+- **涉及文件:** `prompts/system_prompt/full_prompt_v4.md`, `prompts/system_prompt/CLAUDE.md`, `CHANGELOG.md`
+- **验证方式:** 通过 `rg -n \"^<[^/].*>$\" prompts/system_prompt/full_prompt_v4.md` 检查顶层标签完整性。
+
+## [2025-12-31T14:23:40+08:00] - 统一 full_prompt_v4 列表编号
+- **任务名称:** 提示词列表格式统一
+- **关键改动点:** 修正「元规则」编号跳跃；统一「坏味道清单」编号格式（`1.` 风格）
+- **涉及文件:** `prompts/system_prompt/full_prompt_v4.md`
+- **验证方式:** `rg -n \"^15\\.|^16\\.|^17\\.|^\\s*\\d+\\)\" prompts/system_prompt/full_prompt_v4.md` 无输出
+
+## [2025-12-31T14:32:43+08:00] - 调整工具使用规则排序
+- **任务名称:** 工具规则排序优化
+- **关键改动点:** 将「工具使用规则」按约束优先级（工具边界→参数/环境→执行方式→失败与求助）重排并重新编号
+- **涉及文件:** `prompts/system_prompt/full_prompt_v4.md`
+- **验证方式:** 人工检查 `工具使用规则` 段落编号与顺序
+
+## [2025-12-31T14:33:21+08:00] - 工具使用规则编号从 1 开始
+- **任务名称:** 工具规则编号修正
+- **关键改动点:** 将「工具使用规则」编号由 `6-14` 改为 `1-9`
+- **涉及文件:** `prompts/system_prompt/full_prompt_v4.md`
+- **验证方式:** 人工检查 `工具使用规则` 段落编号连续性

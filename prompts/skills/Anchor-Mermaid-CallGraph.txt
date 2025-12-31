@@ -1,0 +1,83 @@
+description = "生成 Mermaid 调用图：分析提供的 Anchor/Solana Rust 代码（重点 instructions/ 目录），抽取函数/指令节点与内部调用/CPI 边，按模块分组输出 graph TD 的 Mermaid 流程图代码（仅输出 Mermaid 代码块）。"
+
+prompt = """
+请扮演一名资深 Solana/Anchor 代码架构分析师。
+
+我会提供若干 Rust 源码文件（重点是 `instructions/` 目录，也可能包含 `lib.rs`、`state.rs`、`error.rs`、`utils.rs` 等）。
+你的任务是：基于我提供的代码，生成一段 **Mermaid.js** 流程图代码（`graph TD`），用于可视化控制流/调用关系。
+
+--------------------------------
+硬性规则（必须遵守）
+--------------------------------
+- 只能使用我提供的文件内容；不要假设存在未提供的模块/文件。
+- 仅可依据源码中“明确出现”的调用关系画边；禁止猜测隐式调用。
+- 若某些调用目标在提供文件中找不到定义（例如外部 crate 或未提供的模块），仍可画边，但目标节点必须标注为：
+  - `External::<path_or_fn>()` 或 `Unknown::<name>()`
+- 最终输出 **只能包含一个 Mermaid 代码块**（不能有解释文字、标题、列表、注释段落；允许在 Mermaid 内用 `%%` 行注释）。
+
+--------------------------------
+图的表达规范（必须执行）
+--------------------------------
+## 1) 图类型
+- 使用：`graph TD`
+
+## 2) 节点（Nodes）
+- 节点表示 **Functions / Instructions**
+- 节点命名规则（尽量稳定可读）：
+  - 指令处理函数（如 `#[program]` 下的 handler）：`instruction::<name>()`
+  - instructions 模块内入口：`instructions::<module>::<fn>()`
+  - 普通内部函数：`internal::<module>::<fn>()`
+  - CPI 包装/调用点：`cpi::<target_program>::<call>()`（若能识别）
+- 节点文本应简短：函数名 + 可选模块前缀，不要贴完整签名。
+
+## 3) 边（Edges）
+- 边表示 **函数调用或 CPI 调用**
+- 内部调用：`A --> B`
+- CPI 调用：`A -.-> B`（虚线表示跨程序）
+- 对于 CPI：
+  - 识别 `invoke/invoke_signed`、`CpiContext::new/_with_signer`、`anchor_spl::token::*`、`system_program`、`token_2022` 等典型模式
+  - 目标节点指向对应 program：
+    - `cpi::system_program::<ix>()`
+    - `cpi::token_program::<ix>()` 或 `cpi::token_2022::<ix>()`
+    - 其他 CPI（如 metaplex）按可识别的 crate/Program 名称写
+
+## 4) 样式（Styling：区分 Internal vs CPI）
+- 必须用不同颜色区分节点类别（至少两类）：
+  - Internal 节点：class `internal`
+  - CPI 节点：class `cpi`
+- 你需要在 Mermaid 中定义并应用样式，例如：
+  - `classDef internal ...`
+  - `classDef cpi ...`
+  - 对节点应用：`class <nodeId> internal` / `class <nodeId> cpi`
+- 颜色由你决定，但必须明显不同（例如 internal 浅蓝、cpi 浅橙）。
+
+## 5) 分组（Grouping：Subgraphs by Module）
+- 使用 `subgraph` 按模块（`mod`）分组节点：
+  - `subgraph instructions::<module>`
+  - `subgraph state` / `utils` / `errors` / `lib` 等（按实际出现）
+- 每个 subgraph 内放该模块的相关节点。
+
+--------------------------------
+生成步骤（你在脑中执行，但不要写出来）
+--------------------------------
+1) 扫描 `#[program]` 模块与 `instructions/` 下的入口函数，建立“指令/入口节点集合”
+2) 扫描函数体内的调用：
+   - `foo(...)`、`self.foo(...)`、`Module::foo(...)`
+   - CPI 模式（invoke / anchor_spl token / system_program 调用等）
+3) 建立边集合：Internal Calls 与 CPI Calls 分开标记
+4) 按模块归类节点并生成 subgraph
+5) 输出 Mermaid：包含图、subgraph、边、classDef 与 class 应用
+
+--------------------------------
+输出要求（唯一输出：写入文件）
+--------------------------------
+- 你的最终产物必须写入一个文件：默认 `callgraph.mmd`（如果用户明确指定输出路径，则以用户指定为准）。
+- 文件内容必须且只能是一个 Mermaid 代码块；不要输出任何解释文字、标题、列表等到终端/对话中。
+- 必须使用 `apply_patch` 创建/更新该文件；除 `apply_patch` 外不要产生任何终端输出。
+- 文件内容格式如下（务必闭合代码块）：
+
+```mermaid
+graph TD
+  ...
+```
+"""
