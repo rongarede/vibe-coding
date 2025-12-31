@@ -19,5 +19,5 @@
 </context_optimization>
 
 <formatting_conventions>
-- **列表转换：** 将罗马数字列表（如 (i), (ii)）格式化为：`- **(i) Term:** Description.`。
+- **LaTeX 论文列表转换：** 仅在修改 LaTeX 格式的论文文本时，将罗马数字列表（如 (i), (ii)）格式化为：`- **(i) Term:** Description.`。
 </formatting_conventions>
