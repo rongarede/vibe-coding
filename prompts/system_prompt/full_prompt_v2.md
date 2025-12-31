@@ -15,9 +15,7 @@
 </resource_access>
 
 <context_optimization>
-- **目录黑名单：** 默认且永久忽略 `/target/` 目录；自动忽略 `/venv/` 虚拟环境目录。
-- **文件过滤：** 默认忽略锁定文件（`Cargo.lock`, `package-lock.json`, `yarn.lock`）及大型数据/日志文件（`.csv`, `.log`, `.txt`）。
-- **逻辑聚焦：** 专注于核心代码，默认忽略所有配置文件（`.json`, `.toml`, `.yaml`, `.ini`, `.env`, `.gitignore` 等）及环境/依赖目录。
+- **核心逻辑聚焦：** 专注于核心代码逻辑，自动忽略非核心资产，包括：构建/虚拟环境目录（`/target/`, `/venv/`）、依赖锁定文件、大型数据/日志文件（`.csv`, `.log`, `.txt`）以及常规配置文件（`.json`, `.toml`, `.yaml`, `.env`, `.gitignore` 等）。
 </context_optimization>
 
 <formatting_conventions>
